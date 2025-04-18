@@ -1,4 +1,3 @@
-
 import os
 import torch
 import argparse
@@ -10,7 +9,7 @@ from tqdm import tqdm
 # import seaborn as sns
 
 from dataset import create_dataloaders
-from model import CNN  # Replace with your actual model import
+from model import CNN, ResNet50FineTuner  # Import both model types
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Test your best model configuration on the test set")
@@ -20,20 +19,28 @@ def parse_args():
     parser.add_argument("--wandb_run_name", type=str, default="best_model_test", help="W&B run name")
     parser.add_argument("--checkpoint", type=str, help="Path to best model checkpoint (optional)")
     
-    # Best model configuration params
+    # Model type selection
+    parser.add_argument("--model_type", type=str, default="cnn", choices=["cnn", "resnet50"],
+                       help="Type of model to test (CNN or ResNet50)")
+    
+    # CNN model configuration params
     parser.add_argument("--num_blocks", type=int, default=5, help="Number of conv blocks")
-    parser.add_argument("--base_filters", type=int, default=32, help="Base number of filters from best model")
+    parser.add_argument("--base_filters", type=int, default=128, help="Base number of filters from best model")
     parser.add_argument("--filter_config", type=str,  default="fixed", help="Filter configuration from best model")
-    parser.add_argument("--filter_sizes", type=int, nargs="+", default=[3, 3, 3, 3, 3], help="Filter sizes from best model")
-    parser.add_argument("--activation", type=str, default="relu", help="Activation function from best model")
+    parser.add_argument("--filter_sizes", type=int, nargs="+", default=[3, 3, 5, 5, 7], help="Filter sizes from best model")
+    parser.add_argument("--activation", type=str, default="mish", help="Activation function from best model")
     parser.add_argument("--dense_activation", type=str, default="relu", help="Dense activation from best model")
-    parser.add_argument("--dense_neurons", type=int, default=128, help="Number of dense neurons from best model")
+    parser.add_argument("--dense_neurons", type=int, default=512, help="Number of dense neurons from best model")
     parser.add_argument("--batch_norm", action="store_true", help="Use batch normalization if in best model")
     parser.add_argument("--dropout_rate", type=float, default=0, help="Dropout rate from best model")
     
+    # ResNet50 specific parameters
+    parser.add_argument("--freeze_option", type=int, default=1, choices=[0, 1, 2],
+                      help="Freeze option for ResNet50 (0=fc only, 1=fc+last block, 2=all)")
+    
     # Other params
     parser.add_argument("--image_size", type=int, nargs=2, default=[224, 224], help="Image size (height, width)")
-    parser.add_argument("--batch_size", type=int, default=32, help="Batch size for testing")
+    parser.add_argument("--batch_size", type=int, default=128, help="Batch size for testing")
     
     return parser.parse_args()
 
@@ -47,12 +54,17 @@ def test_model(model, test_loader, device):
     
     correct = 0
     total = 0
+    test_loss = 0
+    criterion = torch.nn.CrossEntropyLoss()
     
     with torch.no_grad():
         for batch_idx, (images, labels) in enumerate(tqdm(test_loader, desc="Testing")):
             images, labels = images.to(device), labels.to(device)
             
             outputs = model(images)
+            loss = criterion(outputs, labels)
+            test_loss += loss.item() * images.size(0)
+            
             _, predicted = torch.max(outputs, 1)
             
             # Update accuracy count
@@ -74,10 +86,13 @@ def test_model(model, test_loader, device):
                     })
     
     accuracy = 100.0 * correct / total
+    avg_loss = test_loss / total
     print(f"\nTest Accuracy: {accuracy:.2f}%")
+    print(f"Test Loss: {avg_loss:.4f}")
     
     return {
         'accuracy': accuracy,
+        'loss': avg_loss,
         'predictions': np.array(all_preds),
         'labels': np.array(all_labels),
         'sample_images': sample_images
@@ -155,44 +170,6 @@ def create_visualization_grid(results, class_names, output_dir):
     print(f"Saved visualization grid to {grid_path}")
     return grid_path, wandb_img
 
-# def create_confusion_matrix(results, num_classes, class_names, output_dir):
-#     """Create and save a confusion matrix"""
-#     labels = results['labels']
-#     predictions = results['predictions']
-    
-#     # Create confusion matrix
-#     cm = confusion_matrix(labels, predictions)
-    
-#     # For visualization, limit to first 20 classes if there are many
-#     max_classes = min(20, num_classes)
-    
-#     plt.figure(figsize=(12, 10))
-#     sns.heatmap(
-#         cm[:max_classes, :max_classes],
-#         annot=True,
-#         fmt='d',
-#         cmap='Blues',
-#         xticklabels=range(max_classes),
-#         yticklabels=range(max_classes)
-#     )
-#     plt.title('Confusion Matrix')
-#     plt.xlabel('Predicted Label')
-#     plt.ylabel('True Label')
-    
-#     # Save the figure
-#     cm_path = os.path.join(output_dir, "confusion_matrix.png")
-#     plt.savefig(cm_path, bbox_inches='tight')
-#     plt.close()
-    
-#     # Create a wandb compatible figure for direct logging
-#     wandb_img = wandb.Image(
-#         cm_path,
-#         caption="Confusion Matrix"
-#     )
-    
-#     print(f"Saved confusion matrix to {cm_path}")
-#     return cm_path, wandb_img
-
 def get_class_names(data_dir):
     """Get class names from dataset directory"""
     test_dir = os.path.join(data_dir, 'test')
@@ -208,23 +185,36 @@ def main():
     # Create output directory
     os.makedirs(args.output_dir, exist_ok=True)
     
-    # Initialize W&B directly with your best model configuration
-    wandb.init(
-        project=args.wandb_project,
-        name=args.wandb_run_name,
-        config={
+    # Initialize W&B with configuration based on model type
+    config = {
+        "model_type": args.model_type,
+        "dense_neurons": args.dense_neurons,
+        "dropout_rate": args.dropout_rate,
+        "image_size": args.image_size,
+        "evaluation": "test_set"
+    }
+    
+    # Add model-specific parameters
+    if args.model_type == "cnn":
+        config.update({
             "num_blocks": args.num_blocks,
             "base_filters": args.base_filters,
             "filter_config": args.filter_config,
             "filter_sizes": args.filter_sizes,
             "activation": args.activation,
             "dense_activation": args.dense_activation,
-            "dense_neurons": args.dense_neurons,
-            "batch_norm": args.batch_norm,
-            "dropout_rate": args.dropout_rate,
-            "image_size": args.image_size,
-            "evaluation": "test_set"  # Indicate this is test set evaluation
-        }
+            "batch_norm": args.batch_norm
+        })
+    else:  # ResNet50
+        config.update({
+            "freeze_option": args.freeze_option,
+            "dense_activation": args.dense_activation
+        })
+    
+    wandb.init(
+        project=args.wandb_project,
+        name=args.wandb_run_name,
+        config=config
     )
     
     # Get device
@@ -248,21 +238,32 @@ def main():
     test_loader = data_loaders['test']
     num_classes = data_loaders['num_classes']
     
-    # Create model with best configuration
-    model = CNN(
-        input_channels=3,
-        input_size=tuple(args.image_size),
-        num_classes=num_classes,
-        num_blocks=args.num_blocks,
-        filter_config=args.filter_config,
-        base_filters=args.base_filters,
-        filter_sizes=args.filter_sizes,
-        activation=args.activation,
-        dense_neurons=args.dense_neurons,
-        batch_norm=args.batch_norm,
-        dropout_rate=args.dropout_rate,
-        dense_activation=args.dense_activation
-    )
+    # Create model based on model type
+    if args.model_type == "cnn":
+        print("Creating CNN model...")
+        model = CNN(
+            input_channels=3,
+            input_size=tuple(args.image_size),
+            num_classes=num_classes,
+            num_blocks=args.num_blocks,
+            filter_config=args.filter_config,
+            base_filters=args.base_filters,
+            filter_sizes=args.filter_sizes,
+            activation=args.activation,
+            dense_neurons=args.dense_neurons,
+            batch_norm=args.batch_norm,
+            dropout_rate=args.dropout_rate,
+            dense_activation=args.dense_activation
+        )
+    else:  # ResNet50
+        print("Creating ResNet50 model...")
+        model = ResNet50FineTuner(
+            num_classes=num_classes,
+            dense_neurons=args.dense_neurons,
+            dropout_rate=args.dropout_rate,
+            freeze_option=args.freeze_option,
+            dense_activation=args.dense_activation
+        )
     
     # Load checkpoint if provided
     if args.checkpoint:
@@ -273,25 +274,59 @@ def main():
         if 'state_dict' in checkpoint:
             # PyTorch Lightning format
             state_dict = checkpoint['state_dict']
-            # Remove 'model.' prefix if needed
-            if all(k.startswith('model.') for k in state_dict.keys()):
-                state_dict = {k.replace('model.', ''): v for k, v in state_dict.items()}
-            model.load_state_dict(state_dict)
+            
+            # Handle ResNet50 model's structure if needed
+            if args.model_type == "resnet50":
+                # If state_dict keys have 'model.' prefix but model doesn't
+                if any(k.startswith('model.') for k in state_dict.keys()):
+                    if not hasattr(model, 'model'):
+                        state_dict = {k.replace('model.', ''): v for k, v in state_dict.items()}
+                
+                # If checkpoint has 'model.model' but our ResNet50FineTuner has just 'model'
+                if any(k.startswith('model.model.') for k in state_dict.keys()):
+                    state_dict = {k.replace('model.model.', 'model.'): v for k, v in state_dict.items()}
+            
+            # For both models, remove 'model.' prefix if needed
+            if hasattr(model, 'model') and not any(k.startswith('model.') for k in state_dict.keys()):
+                state_dict = {f"model.{k}": v for k, v in state_dict.items()}
+            
+            try:
+                model.load_state_dict(state_dict, strict=False)
+                print("Successfully loaded checkpoint with state_dict")
+            except Exception as e:
+                print(f"Warning: Error loading checkpoint: {e}")
+                print("Trying alternative loading method...")
+                
+                # Try alternative loading method
+                try:
+                    # Create a new state dict by matching parameter shapes
+                    model_dict = model.state_dict()
+                    pretrained_dict = {k: v for k, v in state_dict.items() 
+                                      if k in model_dict and v.shape == model_dict[k].shape}
+                    model_dict.update(pretrained_dict)
+                    model.load_state_dict(model_dict)
+                    print(f"Loaded {len(pretrained_dict)}/{len(model_dict)} parameters using shape matching")
+                except Exception as e2:
+                    print(f"Error with alternative loading method: {e2}")
+                    print("Continuing with initialized weights")
         else:
             # Direct model state dict
-            model.load_state_dict(checkpoint)
+            try:
+                model.load_state_dict(checkpoint, strict=False)
+                print("Successfully loaded checkpoint")
+            except Exception as e:
+                print(f"Warning: Error loading checkpoint: {e}")
+                print("Continuing with initialized weights")
     else:
-        print("No checkpoint provided. Testing with randomly initialized weights.")
-        # Initialize with Xavier/Glorot initialization
-        def init_weights(m):
-            if isinstance(m, torch.nn.Conv2d) or isinstance(m, torch.nn.Linear):
-                torch.nn.init.xavier_uniform_(m.weight)
-                if m.bias is not None:
-                    torch.nn.init.zeros_(m.bias)
-        
-        model.apply(init_weights)
+        print("No checkpoint provided. Testing with initialized weights.")
     
     model = model.to(device)
+    
+    # Print parameter counts
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f"Total parameters: {total_params:,}")
+    print(f"Trainable parameters: {trainable_params:,}")
     
     # Test the model
     print("\nEvaluating model on test set...")
@@ -299,7 +334,6 @@ def main():
     
     # Create visualizations with direct wandb logging
     grid_path, grid_wandb = create_visualization_grid(results, class_names, args.output_dir)
-    # cm_path, cm_wandb = create_confusion_matrix(results, num_classes, class_names, args.output_dir)
     
     # Calculate per-class accuracy
     per_class_acc = {}
@@ -328,6 +362,7 @@ def main():
     # Log everything to W&B
     wandb.log({
         "test_accuracy": results['accuracy'],
+        "test_loss": results['loss'],
         "prediction_grid": grid_wandb,
         "class_accuracies": class_table,
         **class_accuracies  # Log individual class accuracies
@@ -335,13 +370,16 @@ def main():
     
     # Save test results to a file
     with open(os.path.join(args.output_dir, "test_results.txt"), "w") as f:
-        f.write(f"Test Accuracy: {results['accuracy']:.2f}%\n\n")
+        f.write(f"Model type: {args.model_type}\n")
+        f.write(f"Test Accuracy: {results['accuracy']:.2f}%\n")
+        f.write(f"Test Loss: {results['loss']:.4f}\n\n")
         f.write("Per-class accuracy:\n")
         for class_name, accuracy in per_class_acc.items():
             f.write(f"{class_name}: {accuracy:.2f}%\n")
     
     print(f"\nAll results saved to {args.output_dir}")
     print(f"Test accuracy: {results['accuracy']:.2f}%")
+    print(f"Test loss: {results['loss']:.4f}")
     print(f"Results also logged to W&B project: {args.wandb_project}, run: {wandb.run.name}")
     
     # Finish the wandb run

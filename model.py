@@ -1,7 +1,8 @@
 # import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+from torchvision.models import resnet50, ResNet50_Weights
+import math
 class CNNBlock(nn.Module):
     """A single block consisting of convolution, activation, and max-pooling."""
     def __init__(self, in_channels, out_channels, kernel_size=3, 
@@ -205,4 +206,96 @@ class CNN(nn.Module):
         return {
             "total_computations": total_computations,
             "total_parameters": total_parameters
+        }
+        
+class ResNet50FineTuner(nn.Module):
+    """
+    ResNet50 model with fine-tuning capabilities.
+    This class implements pre-trained ResNet50 with customizable freezing options.
+    """
+    def __init__(self, num_classes=10, dense_neurons=512, dropout_rate=0.0, 
+                 freeze_option=1, dense_activation="relu"):
+        """
+        Initialize the ResNet50 fine-tuning model.
+        
+        Args:
+            num_classes: Number of output classes
+            dense_neurons: Size of the intermediate dense layer (after ResNet50 features, before final classification)
+            dropout_rate: Dropout rate for dense layer
+            freeze_option: Freezing strategy:
+                           0 = unfreeze fc only
+                           1 = unfreeze fc + last conv block
+                           2 = unfreeze all layers
+            dense_activation: Activation function for dense layer
+        """
+        super(ResNet50FineTuner, self).__init__()
+        
+        # Store parameters
+        self.dense_activation_name = dense_activation
+        
+        # Load pre-trained ResNet50
+        self.model = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2)
+        
+        # Save the number of features in the final layer
+        num_ftrs = self.model.fc.in_features
+        
+        # Replace the final fully connected layer with our custom layers
+        self.model.fc = nn.Sequential(
+            nn.Linear(num_ftrs, dense_neurons),
+            self._get_activation(self.dense_activation_name),
+            nn.Dropout(dropout_rate),
+            nn.Linear(dense_neurons, num_classes)
+        )
+        
+        # Apply freezing strategy
+        self._apply_freezing(freeze_option)
+        
+    def _get_activation(self, activation_name="relu"):
+        """Get activation function by name"""
+        activations = {
+            "relu": nn.ReLU(inplace=True),
+            "gelu": nn.GELU(),
+            "silu": nn.SiLU(inplace=True),
+            "mish": nn.Mish(inplace=True)
+        }
+        return activations.get(activation_name, nn.ReLU(inplace=True))
+    
+    def _apply_freezing(self, freeze_option):
+        """
+        Apply the specified freezing strategy.
+        
+        Args:
+            freeze_option: 0 = unfreeze fc only
+                          1 = unfreeze fc + last conv block
+                          2 = unfreeze all layers
+        """
+        # First freeze all parameters
+        if freeze_option < 2:  # No need to freeze if option is 2 (unfreeze everything)
+            for param in self.model.parameters():
+                param.requires_grad = False
+        
+        # Then unfreeze according to the option
+        if freeze_option == 0:
+            # Unfreeze only the fully connected layer
+            for param in self.model.fc.parameters():
+                param.requires_grad = True
+                
+        elif freeze_option == 1:
+            # Unfreeze the fully connected layer and the last conv block
+            for param in self.model.layer4.parameters():
+                param.requires_grad = True
+            for param in self.model.fc.parameters():
+                param.requires_grad = True
+                
+        # If freeze_option is 2, all parameters are already unfrozen
+    
+    def forward(self, x):
+        """Forward pass through the model"""
+        return self.model(x)
+    
+    def count_parameters(self):
+        """Count the number of trainable parameters"""
+        return {
+            "trainable": sum(p.numel() for p in self.parameters() if p.requires_grad),
+            "total": sum(p.numel() for p in self.parameters())
         }

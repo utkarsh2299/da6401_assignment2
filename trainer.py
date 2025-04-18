@@ -1,5 +1,7 @@
 # import os
 import torch
+torch.cuda.empty_cache()
+torch.backends.cuda.matmul.allow_tf32 = True
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
@@ -141,8 +143,10 @@ def train_model(model, data_loaders, config):
         accelerator='gpu' if torch.cuda.is_available() else 'cpu',
         devices=1,
         logger=wandb_logger,
+        accumulate_grad_batches=2,
+        gradient_clip_val=1.0,
         callbacks=[checkpoint_callback, early_stop_callback],
-        precision=16 if config.get('use_mixed_precision', True) else 32,
+        precision="16-mixed" if config.get('use_mixed_precision', True) else 32,
         log_every_n_steps=50,
         deterministic=True
     )

@@ -1,7 +1,7 @@
 def get_sweep_config():
     """
     Get the configuration for the W&B hyperparameter sweep.
-    
+    includes parameters for both CNN and ResNet50 models.
     Returns:
         dict: W&B sweep configuration
     """
@@ -15,6 +15,10 @@ def get_sweep_config():
             # Model architecture parameters
             'num_blocks': {
                 'value': 5  # Fixed as per assignment requirement
+            },
+            'model_type': {
+                # 'values': ['cnn', 'resnet50']
+                'values': ['resnet50']
             },
             'base_filters': {
                 'values': [32, 64, 128]
@@ -59,7 +63,7 @@ def get_sweep_config():
                 'value': [224, 224]  
             },
             'batch_size': {
-                'values': [32, 64,128]
+                'values': [32, 64,16,128]
             },
             'learning_rate': {
                  'values': [1e-3,1e-4]
@@ -68,10 +72,15 @@ def get_sweep_config():
                  'values': [0,0.5,0.005]
             },
             'max_epochs': {
-                'values': [10,15]
+                # 'values': [10,15]
+                'values': [10,5]
             },
             'use_mixed_precision': {
                 'value': True
+            },
+            # ResNet50-specific parameters
+            'freeze_option': {
+                'values': [0, 1, 2]
             }
         }
     }

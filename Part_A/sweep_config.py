@@ -6,7 +6,7 @@ def get_sweep_config():
         dict: W&B sweep configuration
     """
     sweep_config = {
-        'method': 'bayes',  # or 'grid', 'bayes'
+        'method': 'bayes',  # or 'grid', 'random'
         'metric': {
             'name': 'val_acc',
             'goal': 'maximize'

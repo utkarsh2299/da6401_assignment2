@@ -26,9 +26,9 @@ python main.py \
   --model_type resnet50 \
   --batch_size 32 \
   --learning_rate 1e-4 \
-  --max_epochs 20 \
+  --max_epochs 10 \
   --dense_neurons 512 \
-  --freeze_option 1 \
+  --freeze_option 2 \
   --dropout_rate 0.2 \
   --use_augmentation
 ```

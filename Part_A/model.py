@@ -210,7 +210,7 @@ class CNN(nn.Module):
         
 class ResNet50FineTuner(nn.Module):
     """
-    ResNet50 model with fine-tuning capabilities.
+    ResNet50 model with fine-tuning .
     This class implements pre-trained ResNet50 with customizable freezing options.
     """
     def __init__(self, num_classes=10, dense_neurons=512, dropout_rate=0.0, 
@@ -230,16 +230,16 @@ class ResNet50FineTuner(nn.Module):
         """
         super(ResNet50FineTuner, self).__init__()
         
-        # Store parameters
+    
         self.dense_activation_name = dense_activation
         
-        # Load pre-trained ResNet50
+        #pre-trained ResNet50
         self.model = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2)
         
         # Save the number of features in the final layer
         num_ftrs = self.model.fc.in_features
         
-        # Replace the final fully connected layer with our custom layers
+        # Replace the final fully connected layer with custom layers
         self.model.fc = nn.Sequential(
             nn.Linear(num_ftrs, dense_neurons),
             self._get_activation(self.dense_activation_name),
@@ -247,7 +247,7 @@ class ResNet50FineTuner(nn.Module):
             nn.Linear(dense_neurons, num_classes)
         )
         
-        # Apply freezing strategy
+        # freezing strategy
         self._apply_freezing(freeze_option)
         
     def _get_activation(self, activation_name="relu"):
@@ -274,7 +274,7 @@ class ResNet50FineTuner(nn.Module):
             for param in self.model.parameters():
                 param.requires_grad = False
         
-        # Then unfreeze according to the option
+        #Then unfreeze according to the option
         if freeze_option == 0:
             # Unfreeze only the fully connected layer
             for param in self.model.fc.parameters():

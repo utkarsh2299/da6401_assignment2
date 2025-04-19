@@ -121,7 +121,19 @@ def train_model(model, data_loaders, config):
         name=config.get('run_name', None),
         log_model=False
     )
+    #     checkpoint_callback = ModelCheckpoint(
+    #     monitor='val_loss',
+    #     dirpath=config.get('checkpoint_dir', './checkpoints'),
+    #     filename='inaturalist-cnn-{epoch:02d}-{val_loss:.2f}',
+    #     save_top_k=3,
+    #     mode='min'
+    # )
     
+    # early_stop_callback = EarlyStopping(
+    #     monitor='val_loss',
+    #     patience=config.get('patience', 10),
+    #     mode='min'
+    # )
     # Configure callbacks
     checkpoint_callback = ModelCheckpoint(
         monitor='val_loss',

@@ -106,6 +106,12 @@ python main.py \
 
 The sweep configuration is defined in `sweep_config.py` and can be modified to search different hyperparameter spaces.
 
+Argument	Type	Default	Description
+--data_dir	str	Required	Path to the dataset directory
+--batch_size	int	16	Batch size for training
+--val_split	float	0.2	Validation split ratio
+--use_augmentation	flag	False	Use data augmentation
+--image_size	int (2 values)	[224, 224]	Input image size in format: height width
 
 ## Model Architectures
 

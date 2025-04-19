@@ -78,7 +78,7 @@ def sweep_train():
         args = parse_args()
         config = wandb.config
         
-        # Create a descriptive run name based on model type
+        # descriptive run name based on model type
         if config.get('model_type', 'cnn') == 'cnn':
             model_name = f"cnn_{config.get('filter_config')}_bs_{config.get('batch_size')}_dn{config.get('dense_neurons')}_f{config.get('base_filters')}_ks{config.get('filter_sizes')}_act{config.get('activation')}_ep{config.get('max_epochs')}_lr{config.get('learning_rate')}"
         else:  # ResNet50
@@ -135,14 +135,14 @@ def sweep_train():
                 freeze_option=config.get('freeze_option', 1)
             )
             
-            # Print the number of trainable parameters for ResNet50
+            #Print the number of trainable parameters for ResNet50
             trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
             total_params = sum(p.numel() for p in model.parameters())
             print(f"Trainable parameters: {trainable_params:,}")
             print(f"Total parameters: {total_params:,}")
         
         print(wandb.run.name)
-        # Train the model
+        #Train the model
         trained_model = train_model(model, data_loaders, config)
     wandb.finish()
     return trained_model
@@ -157,7 +157,7 @@ def regular_train():
     args = parse_args()
     config = vars(args)
     
-    # Create a descriptive run name if one wasn't provided
+    # Create a descriptive run name
     if config.get('run_name') is None:
         try:
             if config.get('model_type') == 'cnn':
@@ -244,10 +244,10 @@ def run_sweep():
     wandb.login()
     args = parse_args()
     
-    # Get sweep configuration - this should be updated to include ResNet50 parameters
+    # Get sweep configuration
     sweep_config = get_sweep_config()
     
-    # Add ResNet50 specific parameters to sweep if they're not already there
+  
     if 'parameters' in sweep_config:
         if 'model_type' not in sweep_config['parameters']:
             sweep_config['parameters']['model_type'] = {'values': ['cnn', 'resnet50']}

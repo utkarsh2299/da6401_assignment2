@@ -46,7 +46,7 @@ This repository contains code for training and fine-tuning deep learning models 
 
 ## Training Models
 
-### Training a CNN from Scratch
+### Part A: Training a CNN from Scratch
 
 ```bash
 python main.py \
@@ -64,7 +64,7 @@ python main.py \
   --use_augmentation
 ```
 
-### Fine-tuning a Pre-trained ResNet50
+### Part B: Fine-tuning a Pre-trained ResNet50
 
 ```bash
 python main.py \

@@ -2,6 +2,7 @@
 
 This repository contains code for training and fine-tuning deep learning models on the iNaturalist dataset. It supports both training CNN models from scratch and fine-tuning pre-trained ResNet50 models.
 
+WandB Project Report: [Report](https://api.wandb.ai/links/da24s011-indian-institute-of-technology-madras/ra12jfvd)
 ## Project Structure
 
 Wrote a modular code for both Part A and Part B of the assignment.  Both follow the same pattern below:

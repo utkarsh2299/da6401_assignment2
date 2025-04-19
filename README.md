@@ -104,14 +104,36 @@ python main.py \
   --project_name your_project_name
 ```
 
-The sweep configuration is defined in `sweep_config.py` and can be modified to search different hyperparameter spaces.
+The sweep configuration is defined in `sweep_config.py` and can be modified to search different hyperparameter spaces. Here's the concise list:
 
-Argument	Type	Default	Description
---data_dir	str	Required	Path to the dataset directory
---batch_size	int	16	Batch size for training
---val_split	float	0.2	Validation split ratio
---use_augmentation	flag	False	Use data augmentation
---image_size	int (2 values)	[224, 224]	Input image size in format: height width
+| Argument | Type | Default | Description |
+|----------|------|---------|-------------|
+| `--data_dir` | `str` | **Required** | Path to dataset directory |
+| `--batch_size` | `int` | `16` | Batch size for training |
+| `--val_split` | `float` | `0.2` | Validation split ratio |
+| `--use_augmentation` | `flag` | `False` | Enable data augmentation |
+| `--image_size` | `int` (2 values) | `[224, 224]` | Input image size (H, W) |
+| `--model_type` | `str` | `"cnn"` | `"cnn"` or `"resnet50"` |
+| `--num_blocks` | `int` | `5` | No. of conv blocks (CNN) |
+| `--base_filters` | `int` | `128` | Filters in first conv layer |
+| `--filter_config` | `str` | `"fixed"` | `"fixed"`, `"doubling"`, `"halving"` |
+| `--filter_sizes` | `int` list | `[3, 3, 5, 5, 7]` | Kernel sizes per conv layer |
+| `--activation` | `str` | `"mish"` | Conv activation: `"relu"`, `"gelu"`, `"silu"`, `"mish"` |
+| `--dense_activation` | `str` | `"relu"` | Dense layer activation |
+| `--dense_neurons` | `int` | `512` | Neurons in dense layer |
+| `--batch_norm` | `flag` | `False` | Use batch normalization |
+| `--dropout_rate` | `float` | `0` | Dropout rate |
+| `--freeze_option` | `int` | `1` | `0`: FC only, `1`: FC + last block, `2`: all layers |
+| `--learning_rate` | `float` | `1e-3` | Learning rate |
+| `--weight_decay` | `float` | `1e-5` | Weight decay |
+| `--max_epochs` | `int` | `5` | Max training epochs |
+| `--patience` | `int` | `10` | Early stopping patience |
+| `--use_mixed_precision` | `flag` | `False` | Use mixed precision |
+| `--project_name` | `str` | `"da6401_assignment2"` | W&B project name |
+| `--run_name` | `str` | `None` | Optional W&B run name |
+| `--checkpoint_dir` | `str` | `"./checkpoints"` | Save directory for checkpoints |
+| `--run_sweep` | `flag` | `False` | Run hyperparameter sweep |
+| `--sweep_count` | `int` | `60` | Sweep run count |
 
 ## Model Architectures
 

@@ -142,6 +142,6 @@ Detailed comparisons between training from scratch and fine-tuning showed:
 4. **Hyperparameter Sensitivity**: Different fine-tuning strategies require different hyperparameter settings
 5. **Resource Efficiency**: Fine-tuning requires fewer computational resources for comparable or better performance
 
-## License
+## Note
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+Work done for the course Introduction to Deep Learning. Please raise an issue if the code doesn't work propely for any case.

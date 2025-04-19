@@ -22,7 +22,7 @@ This repository contains code for training and fine-tuning deep learning models 
 
 ```bash
 python main.py \
-  --data_dir path/to/dataset \
+  --data_dir path/to/inaturalist_dataset \
   --model_type cnn \
   --batch_size 16 \
   --learning_rate 1e-4 \

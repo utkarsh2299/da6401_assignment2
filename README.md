@@ -101,33 +101,6 @@ python main.py \
 
 The sweep configuration is defined in `sweep_config.py` and can be modified to search different hyperparameter spaces.
 
-## Evaluation
-
-To evaluate a trained model on the test set:
-
-```bash
-python test.py \
-  --data_dir path/to/dataset \
-  --model_type resnet50 \
-  --checkpoint path/to/checkpoint.ckpt \
-  --output_dir ./results
-```
-
-For CNN models:
-
-```bash
-python test.py \
-  --data_dir path/to/dataset \
-  --model_type cnn \
-  --num_blocks 5 \
-  --base_filters 128 \
-  --filter_config fixed \
-  --filter_sizes 3 3 5 5 7 \
-  --activation mish \
-  --dense_neurons 512 \
-  --checkpoint path/to/checkpoint.ckpt \
-  --output_dir ./results
-```
 
 ## Model Architectures
 

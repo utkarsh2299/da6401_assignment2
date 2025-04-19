@@ -1,4 +1,4 @@
-# iNaturalist Image Classification
+# Deep Neural Network Training for iNaturalist Image Classification | DA6401 Assignment 2 | Introduction to Deep Learning
 
 This repository contains code for training and fine-tuning deep learning models on the iNaturalist dataset. It supports both training CNN models from scratch and fine-tuning pre-trained ResNet50 models.
 
@@ -15,20 +15,13 @@ This repository contains code for training and fine-tuning deep learning models 
 └── requirements.txt    # Python dependencies
 ```
 
-## Setup
-
-### Prerequisites
-
-- Python 3.8+
-- PyTorch 1.12+
-- CUDA-capable GPU (recommended)
 
 ### Installation
 
 1. Clone this repository:
    ```
-   git clone <repository-url>
-   cd <repository-directory>
+   git clone https://github.com/utkarsh2299/da6401_assignment2.git
+   cd da6401_assignment2
    ```
 
 2. Install dependencies:

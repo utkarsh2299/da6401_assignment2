@@ -94,7 +94,7 @@ The `--freeze_option` parameter controls which parts of the ResNet50 model are f
 
 ## Hyperparameter Tuning
 
-To run a hyperparameter sweep using Weights & Biases:
+To run a hyperparameter sweep using Weights & Biases (default cnn):
 
 ```bash
 python main.py \

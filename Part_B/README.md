@@ -49,7 +49,7 @@ To run a hyperparameter sweep using Weights & Biases:
 python main.py \
   --data_dir path/to/dataset \
   --run_sweep \
-  --model_type resnet50
+  --model_type "resnet50" \
   --sweep_count 60 \
   --project_name your_project_name
 ```

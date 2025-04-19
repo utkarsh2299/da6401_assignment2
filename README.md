@@ -1,5 +1,5 @@
 # Deep Neural Network Training for iNaturalist Image Classification | DA6401 Assignment 2 | Introduction to Deep Learning
-
+![image info](image.png)
 This repository contains code for training and fine-tuning deep learning models on the iNaturalist dataset. It supports both training CNN models from scratch and fine-tuning pre-trained ResNet50 models.
 
 WandB Project Report: [Report](https://api.wandb.ai/links/da24s011-indian-institute-of-technology-madras/ra12jfvd)

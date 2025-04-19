@@ -1,6 +1,6 @@
-# Deep Neural Network Training for iNaturalist Image Classification | DA6401 Assignment 2 | Introduction to Deep Learning
+# Part B | Finetuning ResNet for iNaturalist dataset
 
-This repository contains code for training and fine-tuning deep learning models on the iNaturalist dataset. It supports both training CNN models from scratch and fine-tuning pre-trained ResNet50 models.
+This repository contains code for training and fine-tuning deep learning models on the iNaturalist dataset.
 
 ## Project Structure
 
@@ -16,53 +16,7 @@ This repository contains code for training and fine-tuning deep learning models 
 ```
 
 
-### Installation
-
-1. Clone this repository:
-   ```
-   git clone https://github.com/utkarsh2299/da6401_assignment2.git
-   cd da6401_assignment2
-   ```
-
-2. Install dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
-
-3. Prepare the iNaturalist dataset:
-   - Download the dataset
-   - Organize it in the following structure:
-     ```
-     dataset/
-     ├── train/
-     │   ├── class1/
-     │   ├── class2/
-     │   └── ...
-     └── test/
-         ├── class1/
-         ├── class2/
-         └── ...
-     ```
-
 ## Training Models
-
-### Part A: Training a CNN from Scratch
-
-```bash
-python main.py \
-  --data_dir path/to/dataset \
-  --model_type cnn \
-  --batch_size 64 \
-  --learning_rate 1e-3 \
-  --max_epochs 30 \
-  --num_blocks 5 \
-  --base_filters 128 \
-  --filter_config fixed \
-  --filter_sizes 3 3 5 5 7 \
-  --activation mish \
-  --dense_neurons 512 \
-  --use_augmentation
-```
 
 ### Part B: Fine-tuning a Pre-trained ResNet50
 
@@ -101,18 +55,46 @@ python main.py \
 
 The sweep configuration is defined in `sweep_config.py` and can be modified to search different hyperparameter spaces.
 
+Sweep Configurations that gave the best valid accuracy score for ResNet50:  (Run: resnet50_bs_128_dn512_fr2_ep10_lr0.0001)
+
+- 'base_filters':[32] 
+
+- 'filter_config':['halving']
+
+- 'filter_sizes':[3, 3, 5, 5, 7]  # Increasing sizes
+  
+- 'activation': ['relu']
+            
+- 'dense_activation':['relu']
+
+- 'dense_neurons':[512]
+
+####### Regularization parameters
+
+- 'batch_norm':[True]
+  
+- 'dropout_rate':[0.2]
+            
+####### Data augmentation
+
+- 'use_augmentation': [false]
+            
+####### Training parameters
+- 'image_size': [[224, 224]] 
+      
+- 'batch_size': [128]
+
+- 'learning_rate': [1e-4]
+
+- 'weight_decay': [0.005]
+
+- 'max_epochs': [10]
+                
+- 'use_mixed_precision': True
+
+- 'freeze_option': 2
 
 ## Model Architectures
-
-### CNN
-
-The custom CNN architecture supports various configurations:
-
-- Variable number of convolutional blocks
-- Different filter configurations (fixed, doubling, halving)
-- Custom filter sizes per layer
-- Choice of activation functions
-- Optional batch normalization
 
 ### ResNet50
 
@@ -131,16 +113,6 @@ The project uses Weights & Biases for experiment tracking. Each run logs:
 - Model architecture details
 - Hyperparameters
 - Example predictions and visualizations
-
-## Results
-
-Detailed comparisons between training from scratch and fine-tuning showed:
-
-1. **Training Efficiency**: Fine-tuning converges significantly faster than training from scratch
-2. **Performance with Limited Data**: Pre-trained models perform better with smaller datasets
-3. **Feature Transferability**: Early convolutional layers learn domain-agnostic representations
-4. **Hyperparameter Sensitivity**: Different fine-tuning strategies require different hyperparameter settings
-5. **Resource Efficiency**: Fine-tuning requires fewer computational resources for comparable or better performance
 
 ## Note
 

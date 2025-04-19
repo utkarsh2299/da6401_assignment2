@@ -4,7 +4,6 @@ This repository contains code for training and fine-tuning deep learning models 
 
 ## Project Structure
 
-Wrote a modular code for both Part A and Part B of the assignment.  Both follow the same pattern below:
 ```
 .
 ├── main.py             # Main script for training models
@@ -50,7 +49,6 @@ Wrote a modular code for both Part A and Part B of the assignment.  Both follow 
 ### Part A: Training a CNN from Scratch
 
 ```bash
-cd Part_A
 python main.py \
   --data_dir path/to/dataset \
   --model_type cnn \
@@ -69,7 +67,6 @@ python main.py \
 ### Part B: Fine-tuning a Pre-trained ResNet50
 
 ```bash
-cd Part_B
 python main.py \
   --data_dir path/to/dataset \
   --model_type resnet50 \
